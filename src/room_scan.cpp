@@ -2,13 +2,15 @@
 #include <tf/transform_broadcaster.h>
 #include "geometry_msgs/Twist.h"
 #include "sensor_msgs/LaserScan.h"
+#include "nav_msgs/Odometry.h"
 
 void callback();
-ros::Publisher pub;
-ros::Subscriber sub;
+ros::Publisher speedPub;
+ros::Subscriber scanSub;
+ros::Subscriber odomSub;
 
 
-void callback(const sensor_msgs::LaserScan::ConstPtr& msg)
+void callbackScan(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
     std::cout << msg->ranges[0];
 
@@ -24,10 +26,16 @@ void callback(const sensor_msgs::LaserScan::ConstPtr& msg)
     pub.publish(twist);
 }
 
+void callbackOdom(const nav_msgs::Odometry::ConstPtr& odom)
+{
+
+}
+
 int main(int argc, char** argv){
-    ros::init(argc, argv, "drive_random");
+    ros::init(argc, argv, "room_scan");
     ros::NodeHandle n;
-    pub = n.advertise<geometry_msgs::Twist>("cmd_vel", 10);
-    sub = n.subscribe("/scan", 10, callback);
+    speedPub = n.advertise<geometry_msgs::Twist>("cmd_vel", 10);
+    scanSub = n.subscribe("/scan", 10, callbackScan);
+    odomSub = n.subscribe("/odom", 10, callbackOdom);
     ros::spin();
  }
