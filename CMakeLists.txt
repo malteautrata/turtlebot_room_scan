@@ -202,3 +202,5 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+add_executable(turtlebot_room_scan src/room_scan.cpp)
+target_link_libraries(room_scan ${catkin_LIBRARIES})
