@@ -3,6 +3,7 @@
 #include "geometry_msgs/Twist.h"
 #include "sensor_msgs/LaserScan.h"
 #include "nav_msgs/Odometry.h"
+#include "sensor_msgs/Imu.h"
 
 struct startPosition
 {
@@ -11,14 +12,24 @@ struct startPosition
 };
 
 void callback();
-ros::Publisher speedPub;
+ros::Publisher twistPub;
 ros::Subscriber scanSub;
 ros::Subscriber odomSub;
+ros::Subscriber imuSub;
 
 double xPos;
 double yPos;
-startPosition startPos;
+
+//Der Abstand, zu dem die Wand abgefahren werden soll
+double distanceToWall = 1;
+
+//Startposition merken
+startPosition startPos;   
+
+//evtl. nicht benötigt
 bool startReached = false;
+
+// herausfinden, wann der Raum koomplett gescannt wurde
 
 void callbackScan(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
@@ -26,19 +37,21 @@ void callbackScan(const sensor_msgs::LaserScan::ConstPtr& msg)
    
     geometry_msgs::Twist twist;
 
-    if(msg->ranges[90] <= 0.3)  
+    if (xPos == startPos.x)
     {
-        twist.linear.x = 0.0; twist.linear.y = 0.0; twist.linear.z = 0.0;
-        twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 90.0;
-    } else {
-        if (yPos < startPos.y)
-        {
-            startPos.x = xPos;
-            startPos.y = yPos;
-        }
-        twist.linear.x = 0.5; twist.linear.y = 0.0; twist.linear.z = 0.0;
+        distanceToWall += 1;
     }
-    speedPub.publish(twist);
+
+    //Turtlebot darf nicht mehr als 90° drehen, damit er nicht zurück fährt
+    if(msg->ranges[90] <= distanceToWall && msg->ranges[0] >= 0.3)  
+    {
+        twist.linear.x = 0.5; twist.linear.y = 0.0; twist.linear.z = 0.0;
+    } else {
+        
+        twist.linear.x = 0.0; twist.linear.y = 0.0; twist.linear.z = 0.0;
+        twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 10.0;
+    }
+    twistPub.publish(twist);
 }
 
 void callbackOdom(const nav_msgs::Odometry::ConstPtr& odom)
@@ -48,13 +61,29 @@ void callbackOdom(const nav_msgs::Odometry::ConstPtr& odom)
 
     xPos = odom->pose.pose.position.x;
     yPos = odom->pose.pose.position.y;
+
+    if (yPos < startPos.y)
+    {
+        startPos.x = xPos;
+        startPos.y = yPos;
+    }
+}
+
+void callbackImu(const sensor_msgs::Imu::ConstPtr& imu)
+{
+    //Read out rotation
+    std::cout << imu->angular_velocity;
 }
 
 int main(int argc, char** argv){
     ros::init(argc, argv, "room_scan");
     ros::NodeHandle n;
-    speedPub = n.advertise<geometry_msgs::Twist>("cmd_vel", 10);
+    twistPub = n.advertise<geometry_msgs::Twist>("cmd_vel", 10);
     scanSub = n.subscribe("/scan", 10, callbackScan);
     odomSub = n.subscribe("/odom", 10, callbackOdom);
-    ros::spin();
+    imuSub = n.subscribe("/imu", 10, callbackImu);
+    while(ros::ok())
+    {
+        ros::spin();
+    }
  }
