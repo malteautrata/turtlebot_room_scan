@@ -38,16 +38,16 @@ void callbackScan(const sensor_msgs::LaserScan::ConstPtr& msg)
         }
         twist.linear.x = 0.5; twist.linear.y = 0.0; twist.linear.z = 0.0;
     }
-    pub.publish(twist);
+    speedPub.publish(twist);
 }
 
 void callbackOdom(const nav_msgs::Odometry::ConstPtr& odom)
 {
-    std::cout << odom->pos.pose.pose.position.x;
-    std::cout << odom->pos.pose.pose.position.y;
+    std::cout << odom->pose.pose.position.x;
+    std::cout << odom->pose.pose.position.y;
 
-    xPos = odom.pose.pose.position.x;
-    yPos = odom.pose.pose.position.y;
+    xPos = odom->pose.pose.position.x;
+    yPos = odom->pose.pose.position.y;
 }
 
 int main(int argc, char** argv){
