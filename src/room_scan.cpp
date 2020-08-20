@@ -5,7 +5,7 @@
 #include "nav_msgs/Odometry.h"
 #include "sensor_msgs/Imu.h"
 
-struct startPosition
+struct position
 {
     double x;
     double y;
@@ -17,14 +17,12 @@ ros::Subscriber scanSub;
 ros::Subscriber odomSub;
 ros::Subscriber imuSub;
 
-double xPos;
-double yPos;
-
 //Der Abstand, zu dem die Wand abgefahren werden soll
 double distanceToWall = 1;
 
 //Startposition merken
-startPosition startPos;   
+position startPos;   
+position currentPos;
 
 //evtl. nicht benötigt
 bool startReached = false;
@@ -37,7 +35,7 @@ void callbackScan(const sensor_msgs::LaserScan::ConstPtr& msg)
    
     geometry_msgs::Twist twist;
 
-    if (xPos == startPos.x)
+    if (currentPos.x == startPos.x)
     {
         distanceToWall += 1;
     }
@@ -59,13 +57,13 @@ void callbackOdom(const nav_msgs::Odometry::ConstPtr& odom)
     std::cout << odom->pose.pose.position.x;
     std::cout << odom->pose.pose.position.y;
 
-    xPos = odom->pose.pose.position.x;
-    yPos = odom->pose.pose.position.y;
+    currentPos.x = odom->pose.pose.position.x;
+    currentPos.y = odom->pose.pose.position.y;
 
-    if (yPos < startPos.y)
+    if (currentPos.y < startPos.y)
     {
-        startPos.x = xPos;
-        startPos.y = yPos;
+        startPos.x = currentPos.x;
+        startPos.y = currentPos.y;
     }
 }
 
