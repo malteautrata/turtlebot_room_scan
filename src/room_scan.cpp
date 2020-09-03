@@ -18,44 +18,46 @@ ros::Subscriber odomSub;
 ros::Subscriber imuSub;
 
 //Der Abstand, zu dem die Wand abgefahren werden soll
-double distanceToWall = 1;
+double distanceToWall = 0.4;
 
 //Startposition merken
 position startPos;   
 position currentPos;
 
 //evtl. nicht benötigt
-bool startReached = false;
+bool roomScanned = false;
 
 // herausfinden, wann der Raum koomplett gescannt wurde
 
 void callbackScan(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
-    std::cout << msg->ranges[90]; //herausfinden was der Wert bei 90° entspricht
+    //std::cout << msg->ranges[270]; //herausfinden was der Wert bei 90° entspricht
    
     geometry_msgs::Twist twist;
 
+    /*
     if (currentPos.x == startPos.x)
     {
         distanceToWall += 1;
     }
+    */
 
     //Turtlebot darf nicht mehr als 90° drehen, damit er nicht zurück fährt
-    if(msg->ranges[90] <= distanceToWall && msg->ranges[0] >= 0.3)  
+    if(msg->ranges[270] <= distanceToWall && msg->ranges[0] >= 0.3)  
     {
         twist.linear.x = 0.5; twist.linear.y = 0.0; twist.linear.z = 0.0;
     } else {
         
         twist.linear.x = 0.0; twist.linear.y = 0.0; twist.linear.z = 0.0;
-        twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 10.0;
+        twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = -10.0;
     }
     twistPub.publish(twist);
 }
 
 void callbackOdom(const nav_msgs::Odometry::ConstPtr& odom)
 {
-    std::cout << odom->pose.pose.position.x;
-    std::cout << odom->pose.pose.position.y;
+    //std::cout << "X:" << odom->pose.pose.position.x << std::endl;
+    //std::cout << "Y:" << odom->pose.pose.position.y << std::endl;
 
     currentPos.x = odom->pose.pose.position.x;
     currentPos.y = odom->pose.pose.position.y;
@@ -70,7 +72,7 @@ void callbackOdom(const nav_msgs::Odometry::ConstPtr& odom)
 void callbackImu(const sensor_msgs::Imu::ConstPtr& imu)
 {
     //Read out rotation
-    std::cout << imu->angular_velocity;
+    //std::cout << imu->angular_velocity << std::endl;
 }
 
 int main(int argc, char** argv){
@@ -80,6 +82,7 @@ int main(int argc, char** argv){
     scanSub = n.subscribe("/scan", 10, callbackScan);
     odomSub = n.subscribe("/odom", 10, callbackOdom);
     imuSub = n.subscribe("/imu", 10, callbackImu);
+
     while(ros::ok())
     {
         ros::spin();
