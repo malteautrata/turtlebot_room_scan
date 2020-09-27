@@ -2,14 +2,16 @@
 #include <tf/transform_broadcaster.h>
 #include "geometry_msgs/Twist.h"
 #include "sensor_msgs/LaserScan.h"
-#include <thread>         
+#include <thread> 
+#include <algorithm>        
 
 void callback();
 ros::Publisher pub;
 ros::Subscriber sub;
 bool shouldDodge = false;
-bool isTurning;
-bool turnLeft;
+bool driveToWall = true;
+int turned = 0;
+
 bool randomBool()
 {
     return rand() % 2;
@@ -39,55 +41,79 @@ void callback(const sensor_msgs::LaserScan::ConstPtr& msg)
 
     shouldDodge = false;
 
-    for(int i = 1; i <= 45; i++)
+   // Hindernis
+    for(int i = 1; i <= 40; i++)
     {
         if (msg->ranges[i] <= 0.15 && msg->ranges[i] >= 0.0001)
         {
+            driveToWall = false;
             shouldDodge = true;
         }
     }
 
-    for(int i = 315; i <= 359; i++)
+    for(int i = 320; i <= 359; i++)
     {
         if (msg->ranges[i] <= 0.15 && msg->ranges[i] >= 0.0001)
         {
+            driveToWall = false;
             shouldDodge = true;
         }
     }
 
     if (msg->ranges[0] <= 0.2)
     {
+        driveToWall = false;
         shouldDodge = true;
     }
 
-    if(shouldDodge)
+    // An der Wand orientieren
+    if (!driveToWall)
+    {
+        for(int i = 250; i <= 290; i++)
+        {
+            if (msg->ranges[i] >= 0.35)
+            {
+                 //std::cout << "1" << std::endl;
+                shouldDodge = true;
+            }
+        }
+    }
+    
+    int distance = 10000;
+    int degree = 10000;
+
+    if (turned >= 40)
+    {
+        for (int i = 0; i <= 359; i++)
+        {
+            if(distance > msg->ranges[i])
+            {
+                distance = msg->ranges[i];
+                degree = i;
+            }
+        }
+        
+        std::cout << degree << std::endl;
+
+        if ((degree <= 20 && degree >= 0) || (degree <= 359 && degree >= 340))
+        {
+            driveToWall = true;
+        }
+    }
+
+
+    if (shouldDodge && !driveToWall)
     {
         twist.linear.x = 0.0; twist.linear.y = 0.0; twist.linear.z = 0.0;
-        std::cout << randomBool() << std::endl;
+        twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 1.0;
+        turned++;
+        std::cout << "Turned: " << turned << std::endl;
+    }
 
-        if (isTurning)
-       {
-
-       } else
-       {
-           turnLeft = randomBool();
-       }
-       
-       isTurning = true;
-
-        if(turnLeft)
-        {
-            twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 5.0;
-
-        } else 
-        {
-            twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = -5.0;
-
-        }
-    } else 
+    else
     {
         twist.linear.x = 0.5; twist.linear.y = 0.0; twist.linear.z = 0.0;
-        isTurning = false;
+        turned = 0;
     }
     pub.publish(twist);
 }
@@ -112,7 +138,7 @@ int main(int argc, char** argv){
     pub = n.advertise<geometry_msgs::Twist>("cmd_vel", 10);
     sub = n.subscribe("/scan", 10, callback);
 
-    std::thread slamThread (launchSlam); 
+    //std::thread slamThread (launchSlam); 
 
     while(ros::ok())
     {
