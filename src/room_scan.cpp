@@ -41,7 +41,7 @@ void callback(const sensor_msgs::LaserScan::ConstPtr& msg)
 
     shouldDodge = false;
 
-   // Hindernis
+   // Hindernisse im 40° Winkel rechts und links vom Roboter erkennen
     for(int i = 1; i <= 40; i++)
     {
         if (msg->ranges[i] <= 0.15 && msg->ranges[i] >= 0.0001)
@@ -66,7 +66,7 @@ void callback(const sensor_msgs::LaserScan::ConstPtr& msg)
         shouldDodge = true;
     }
 
-    // An der Wand orientieren
+    // An der Wand orientieren; der Roboter soll sich so drehen, dass die Wand rechts neben ihm in Reichweite ist
     if (!driveToWall)
     {
         for(int i = 250; i <= 290; i++)
@@ -79,6 +79,8 @@ void callback(const sensor_msgs::LaserScan::ConstPtr& msg)
         }
     }
     
+
+    // Wenn der Roboter sich zu sehr im Raum und zu weit entfernt von der Wand befindet, soll dieser zur nächst naheliegenden Wand fahren
     int distance = 10000;
     int degree = 10000;
 
@@ -102,6 +104,7 @@ void callback(const sensor_msgs::LaserScan::ConstPtr& msg)
     }
 
 
+    // Es wird abgefragt, ob der Roboter sich drehen oder geradeaus fahren soll
     if (shouldDodge && !driveToWall)
     {
         twist.linear.x = 0.0; twist.linear.y = 0.0; twist.linear.z = 0.0;
@@ -138,7 +141,7 @@ int main(int argc, char** argv){
     pub = n.advertise<geometry_msgs::Twist>("cmd_vel", 10);
     sub = n.subscribe("/scan", 10, callback);
 
-    //std::thread slamThread (launchSlam); 
+    std::thread slamThread (launchSlam); 
 
     while(ros::ok())
     {
