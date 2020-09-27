@@ -9,7 +9,6 @@ project(turtlebot_room_scan)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  std_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -206,4 +205,6 @@ include_directories(
 add_executable(room_scan src/room_scan.cpp)
 target_link_libraries(room_scan ${catkin_LIBRARIES})
 
+add_executable(end2 src/end2.cpp)
+target_link_libraries(end2 ${catkin_LIBRARIES})
 
