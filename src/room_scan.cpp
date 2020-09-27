@@ -97,7 +97,7 @@ void callback(const sensor_msgs::LaserScan::ConstPtr& msg)
         
         std::cout << degree << std::endl;
 
-        if ((degree <= 20 && degree >= 0) || (degree <= 359 && degree >= 340))
+        if ((degree <= 5 && degree >= 0) || (degree <= 359 && degree >= 350))
         {
             driveToWall = true;
         }
@@ -112,11 +112,42 @@ void callback(const sensor_msgs::LaserScan::ConstPtr& msg)
         turned++;
         std::cout << "Turned: " << turned << std::endl;
     }
-
     else
     {
-        twist.linear.x = 0.5; twist.linear.y = 0.0; twist.linear.z = 0.0;
-        turned = 0;
+        if (driveToWall)
+        {
+            distance = 10000;
+            degree = 10000;
+
+
+            for (int i = 0; i <= 359; i++)
+            {
+                if(distance > msg->ranges[i])
+                {   
+                    distance = msg->ranges[i];
+                    degree = i;
+                }
+            }
+        
+            if ((degree <= 5 && degree >= 0) || (degree <= 359 && degree >= 350))
+            {
+                twist.linear.x = 0.5; twist.linear.y = 0.0; twist.linear.z = 0.0;
+                turned = 0;
+
+            }
+            else
+            {
+                twist.linear.x = 0.0; twist.linear.y = 0.0; twist.linear.z = 0.0;
+                twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 1.0;
+            }
+        }
+        else 
+        {
+            twist.linear.x = 0.5; twist.linear.y = 0.0; twist.linear.z = 0.0;
+            turned = 0;
+        }
+
+        
     }
     pub.publish(twist);
 }
