@@ -208,3 +208,6 @@ target_link_libraries(room_scan ${catkin_LIBRARIES})
 add_executable(end2 src/end2.cpp)
 target_link_libraries(end2 ${catkin_LIBRARIES})
 
+add_executable(stop src/stop.cpp)
+target_link_libraries(stop ${catkin_LIBRARIES})
+
