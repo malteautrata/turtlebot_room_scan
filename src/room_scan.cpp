@@ -80,7 +80,7 @@ void callback(const sensor_msgs::LaserScan::ConstPtr& msg)
     //std::cout << "Abstand bis 360: " << abs(abstand) << std::endl;
 
     // wenn der Abstand kleiner als 15cm oder direkt vor dem Roboter kleiner als 20cm ist, befindet sich der Roboter bereits an einer Wand, allerdings muss er sich noch drehen um auszuweichen
-    if (abs(abstand) <= 0.15 || (msg->ranges[0] <= 0.2 && msg-ranges[0] > 0))
+    if (abs(abstand) <= 0.15 || (msg->ranges[0] <= 0.2 && msg->ranges[0] > 0))
     {
         driveToWall = false;
         shouldDodge = true;
@@ -212,8 +212,7 @@ void callbackMap(const nav_msgs::OccupancyGrid::ConstPtr& msg)
             if(double((msg->data[i])==0)&&(double(msg->data[i-info.width])==-1))
             {
                 //Unten
-                //std::cout<<"Karte nicht vollständig!"<<std::endl;
-                
+                //std::cout<<"Karte nicht vollständig!"<<std::endl;            
                 mistakes++;
             }
         }
